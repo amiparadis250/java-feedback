@@ -20,14 +20,14 @@ This is a simple feedback system written in Java using NetBeans. It allows users
 
 1. Run the project
 2. Register and Login to the system
-3.After Login you can start providing your feedback as Usual
+3. After Login you can start providing your feedback as Usual
 
 ## Technologies Used
 
 * Java
 * NetBeans
 * Postgresql
-*Java SWING
+* Java SWING
 
 ## Contributors
 
