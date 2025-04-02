@@ -12,6 +12,69 @@ public class SignUp extends javax.swing.JFrame {
     public SignUp() {
         initComponents();
     }
+    private void registerUser() {
+        String email = jTextField1.getText().trim();
+        String name = jTextField2.getText().trim(); 
+        String password = new String(jPasswordField3.getPassword());
+
+        MasterClass validator = new MasterClass();
+
+        // Check for empty fields
+        if (email.isEmpty() || name.isEmpty() || password.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please fill in all fields", "Registration Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        // Validate email
+        if (!validator.isValidEmail(email)) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid email address", "Invalid Email", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Validate password
+        String passwordError = validator.getPasswordValidationError(password);
+        if (passwordError != null) {
+            JOptionPane.showMessageDialog(this, passwordError, "Password Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        Connection conn = DatabaseConnection.connect();
+       
+        try (
+               
+             PreparedStatement pstmt = conn.prepareStatement("INSERT INTO users (email, names, password) VALUES (?, ?, ?)");) {
+            
+            pstmt.setString(1, email);
+            pstmt.setString(2, name);
+            pstmt.setString(3, password);
+            
+            int rowsAffected = pstmt.executeUpdate();
+
+            if (rowsAffected > 0) {
+                JOptionPane.showMessageDialog(this, "Registration Successful!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                
+                // Reset fields
+                jTextField1.setText("");
+                jTextField2.setText("");
+                jPasswordField3.setText("");
+                
+                // Open login frame
+                this.dispose();
+                Login loginFrame = new Login();
+                loginFrame.setVisible(true);
+                loginFrame.pack();
+                loginFrame.setLocationRelativeTo(null);
+            } else {
+                JOptionPane.showMessageDialog(this, "Registration Failed", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (SQLException ex) {
+            if ("23505".equals(ex.getSQLState())) {
+                JOptionPane.showMessageDialog(this, "Email already exists", "Registration Error", JOptionPane.ERROR_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "Database error: " + ex.getMessage(), "Registration Error", JOptionPane.ERROR_MESSAGE);
+            }
+            ex.printStackTrace();
+        }
+    }
 
     
     @SuppressWarnings("unchecked")
@@ -214,94 +277,7 @@ public class SignUp extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void RegisterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RegisterActionPerformed
-     
-   
-    String email = jTextField1.getText().trim();
-    String name = jTextField2.getText().trim(); 
-    String password = new String(jPasswordField3.getPassword()); 
-
-    // Create an instance of MasterClass for validation
-    MasterClass validator = new MasterClass();
-
-    // Check for empty fields
-    if (email.isEmpty() || name.isEmpty() || password.isEmpty()) {
-        JOptionPane.showMessageDialog(this, 
-            "Please fill in all fields", 
-            "Registration Error", 
-            JOptionPane.ERROR_MESSAGE);
-        return;
-    }
-    
-    // Validate email
-    if (!validator.checkEmail(email)) {
-        JOptionPane.showMessageDialog(this, 
-            "Please enter a valid email address (gmail.com, yahoo.com, or hotmail.com)", 
-            "Invalid Email", 
-            JOptionPane.ERROR_MESSAGE);
-        return;
-    }
-
-    // Validate password
-    String passwordError = validator.getPasswordValidationError(password);
-    if (passwordError != null) {
-        JOptionPane.showMessageDialog(this, 
-            passwordError, 
-            "Password Error", 
-            JOptionPane.ERROR_MESSAGE);
-        return;
-    }
-
-    try {
-        
-        Connection conn = DatabaseConnection.connect();
-        String sql = "INSERT INTO users (email, names, password) VALUES (?, ?, ?)";
-        PreparedStatement pstmt = conn.prepareStatement(sql);
-   
-        pstmt.setString(1, email);
-        pstmt.setString(2, name);
-        pstmt.setString(3, password);
-
-        
-        int rowsAffected = pstmt.executeUpdate();
-
-        if (rowsAffected > 0) {
-            JOptionPane.showMessageDialog(this, 
-                "Registration Successful!", 
-                "Success", 
-                JOptionPane.INFORMATION_MESSAGE);
-            
-            
-            jTextField1.setText("");
-            jTextField2.setText("");
-            jPasswordField3.setText("");
-            this.dispose();
-         Login LoginFrame = new Login();
-        LoginFrame.setVisible(true);
-        LoginFrame.pack();
-        LoginFrame.setLocationRelativeTo(null); 
-        } else {
-            JOptionPane.showMessageDialog(this, 
-                "Registration Failed", 
-                "Error", 
-                JOptionPane.ERROR_MESSAGE);
-        }
-
-    } catch (SQLException ex) {
-
-        if (ex.getSQLState().equals("23505")) { 
-            JOptionPane.showMessageDialog(this, 
-                "Email already exists", 
-                "Registration Error", 
-                JOptionPane.ERROR_MESSAGE);
-        } else {
-            JOptionPane.showMessageDialog(this, 
-                "Database error: " + ex.getMessage(), 
-                "Registration Error", 
-                JOptionPane.ERROR_MESSAGE);
-        }
-        ex.printStackTrace();
-       
-    }
+     registerUser();
 // TODO add your handling code here:
     }//GEN-LAST:event_RegisterActionPerformed
 

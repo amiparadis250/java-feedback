@@ -1,4 +1,3 @@
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -9,6 +8,7 @@ public class DatabaseConnection {
     private static final String USER = "postgres"; 
     private static final String PASSWORD = "123"; 
     private static Connection connection = null;
+    
 
     public static Connection connect() {
         if (connection == null) {
@@ -22,24 +22,26 @@ public class DatabaseConnection {
         }
         return connection;
     }
-
-    // Create necessary tables
     public static void createTables() {
+        String enableExtension = "CREATE EXTENSION IF NOT EXISTS \"pgcrypto\";";
         String createUsersTable = "CREATE TABLE IF NOT EXISTS users ("
-                + "id SERIAL PRIMARY KEY, "
-                + "email VARCHAR(50) UNIQUE NOT NULL, "
-                 + "names VARCHAR(50), "
-                + "password VARCHAR(12) NOT NULL)";
+               + "id UUID PRIMARY KEY DEFAULT gen_random_uuid(),  "
+                + "email VARCHAR(100) UNIQUE NOT NULL, "
+                + "names VARCHAR(50), "
+                + "password VARCHAR(255) NOT NULL)"; 
 
         String createFeedbackTable = "CREATE TABLE IF NOT EXISTS feedbacks ("
-                + "id SERIAL PRIMARY KEY, "
-                + "firstname VARCHAR(50) NOT NULL, "
-                + "lastname VARCHAR(50) NOT NULL, "
+                 + "id UUID PRIMARY KEY DEFAULT gen_random_uuid(), "
+                + "first_name VARCHAR(50) NOT NULL, "
+                + "last_name VARCHAR(50) NOT NULL, "
                 + "email VARCHAR(100) UNIQUE NOT NULL, "
-                + "gender VARCHAR(10) NOT NULL, "
-                + "comment TEXT NOT NULL)";
+                + "gender VARCHAR(10) NOT NULL CHECK (gender IN ('Male', 'Female')), "
+                + "comment TEXT NOT NULL CHECK (LENGTH(comment) BETWEEN 50 AND 100), "
+                + "satisfaction VARCHAR(20) CHECK (satisfaction IN ('Very Satisfied', 'Satisfied', 'Neutral', 'Dissatisfied')), "
+                + "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"; 
 
-        try (Statement stmt = connect().createStatement()) {
+        try (Connection conn = connect(); Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate(enableExtension);
             stmt.executeUpdate(createUsersTable);
             stmt.executeUpdate(createFeedbackTable);
             System.out.println("Tables created successfully!");
@@ -50,8 +52,6 @@ public class DatabaseConnection {
 
     public static void main(String[] args) {
         connect();
-        createTables(); 
+        createTables();
     }
 }
-    
-

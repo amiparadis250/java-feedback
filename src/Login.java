@@ -3,12 +3,32 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.swing.JOptionPane;
+import java.util.prefs.Preferences;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.Timer;
 public class Login extends javax.swing.JFrame {
 
    
     public Login() {
         initComponents();
+        initPreferences();
     }
+    
+private int loginAttempts = 0;
+private boolean loginLocked = false;
+private javax.swing.Timer lockTimer;
+private Preferences prefs;
+
+// Initialize this in your constructor
+private void initPreferences() {
+    prefs = Preferences.userNodeForPackage(this.getClass());
+    String savedEmail = prefs.get("savedEmail", "");
+    if (!savedEmail.isEmpty()) {
+        email.setText(savedEmail);
+        remember.setSelected(true); 
+    }
+}
 
    
     @SuppressWarnings("unchecked")
@@ -23,12 +43,14 @@ public class Login extends javax.swing.JFrame {
         Left = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
-        jTextField1 = new javax.swing.JTextField();
+        email = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
-        jPasswordField2 = new javax.swing.JPasswordField();
+        Password = new javax.swing.JPasswordField();
         Login = new javax.swing.JButton();
         jLabel4 = new javax.swing.JLabel();
         jButton2 = new javax.swing.JButton();
+        toggle = new javax.swing.JCheckBox();
+        remember = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -94,15 +116,15 @@ public class Login extends javax.swing.JFrame {
         jLabel2.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         jLabel2.setText("Email");
 
-        jTextField1.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        email.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
 
         jLabel3.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         jLabel3.setText("Password");
 
-        jPasswordField2.setText("jPasswordField2");
-        jPasswordField2.addActionListener(new java.awt.event.ActionListener() {
+        Password.setText("jPasswordField2");
+        Password.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jPasswordField2ActionPerformed(evt);
+                PasswordActionPerformed(evt);
             }
         });
 
@@ -127,6 +149,17 @@ public class Login extends javax.swing.JFrame {
             }
         });
 
+        toggle.setText("Toggle");
+        toggle.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                toggleActionPerformed(evt);
+            }
+        });
+
+        remember.setBackground(new java.awt.Color(0, 102, 102));
+        remember.setForeground(new java.awt.Color(255, 255, 255));
+        remember.setText("Remember me");
+
         javax.swing.GroupLayout LeftLayout = new javax.swing.GroupLayout(Left);
         Left.setLayout(LeftLayout);
         LeftLayout.setHorizontalGroup(
@@ -140,16 +173,21 @@ public class Login extends javax.swing.JFrame {
                         .addGap(38, 38, 38)
                         .addGroup(LeftLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jTextField1)
+                            .addComponent(email)
                             .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jPasswordField2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 319, Short.MAX_VALUE)
-                            .addComponent(Login, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                            .addComponent(Password, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 319, Short.MAX_VALUE)
+                            .addComponent(Login, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(toggle))
                     .addGroup(LeftLayout.createSequentialGroup()
                         .addGap(38, 38, 38)
-                        .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 168, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(71, Short.MAX_VALUE))
+                        .addGroup(LeftLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(remember)
+                            .addGroup(LeftLayout.createSequentialGroup()
+                                .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 168, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         LeftLayout.setVerticalGroup(
             LeftLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -159,14 +197,18 @@ public class Login extends javax.swing.JFrame {
                 .addGap(44, 44, 44)
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(email, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jPasswordField2, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(LeftLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(Password, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(toggle))
                 .addGap(26, 26, 26)
                 .addComponent(Login, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(46, 46, 46)
+                .addGap(18, 18, 18)
+                .addComponent(remember)
+                .addGap(5, 5, 5)
                 .addGroup(LeftLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4)
                     .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -174,7 +216,7 @@ public class Login extends javax.swing.JFrame {
         );
 
         jPanel1.add(Left);
-        Left.setBounds(430, 10, 440, 490);
+        Left.setBounds(430, 10, 460, 490);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -183,7 +225,7 @@ public class Login extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 881, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(19, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -204,61 +246,109 @@ public class Login extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void LoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LoginActionPerformed
-        String email = jTextField1.getText().trim();
-        String password = new String(jPasswordField2.getPassword());
-
-        if (email.isEmpty() || password.isEmpty()) {
-            JOptionPane.showMessageDialog(this,
-                "Please enter both email and password",
-                "Login Error",
-                JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        try {
-
-            Connection conn = DatabaseConnection.connect();
-            String sql = "SELECT * FROM users WHERE email = ? AND password = ?";
-            PreparedStatement pstmt = conn.prepareStatement(sql);
-            pstmt.setString(1, email);
-            pstmt.setString(2, password);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-
-                JOptionPane.showMessageDialog(this,
-                    "Login Successful!",
-                    "Success",
-                    JOptionPane.INFORMATION_MESSAGE);
-         this.dispose();
-        Feedback FeedbackFrame = new Feedback();
-       FeedbackFrame.setVisible(true);
-       FeedbackFrame.pack();
-       FeedbackFrame.setLocationRelativeTo(null);
+       if (loginLocked) {
+        JOptionPane.showMessageDialog(this,
+            "Login is temporarily locked. Please wait.",
+            "Login Locked",
+            JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+    
+    String emailText = email.getText().trim();
+    String password = new String(Password.getPassword());
+    
+    if (emailText.isEmpty() || password.isEmpty()) {
+        JOptionPane.showMessageDialog(this,
+            "Please enter both email and password",
+            "Login Error",
+            JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+    
+    try {
+        Connection conn = DatabaseConnection.connect();
+        String sql = "SELECT * FROM users WHERE email = ? AND password = ?";
+        PreparedStatement pstmt = conn.prepareStatement(sql);
+        pstmt.setString(1, emailText);
+        pstmt.setString(2, password);
+        ResultSet rs = pstmt.executeQuery();
+        
+        if (rs.next()) {
+            // Handle "Remember Me" checkbox
+            if (jButton2.isSelected()) {
+                prefs.put("savedEmail", emailText);
             } else {
-                // Login failed
+                prefs.remove("savedEmail");
+            }
+            
+            // Reset login attempts on successful login
+            loginAttempts = 0;
+            
+            JOptionPane.showMessageDialog(this,
+                "Login Successful!",
+                "Success",
+                JOptionPane.INFORMATION_MESSAGE);
+            this.dispose();
+            Feedback FeedbackFrame = new Feedback();
+            FeedbackFrame.setVisible(true);
+            FeedbackFrame.pack();
+            FeedbackFrame.setLocationRelativeTo(null);
+        } else {
+            // Login failed, increment attempt counter
+            loginAttempts++;
+            
+            if (loginAttempts >= 3) {
+                // Lock login for 30 seconds
+                loginLocked = true;
                 JOptionPane.showMessageDialog(this,
-                    "Invalid email or password",
+                    "Too many failed attempts. Login locked for 30 seconds.",
+                    "Login Locked",
+                    JOptionPane.WARNING_MESSAGE);
+                
+                // Create and start the lock timer
+ lockTimer = new javax.swing.Timer(30000, new ActionListener() {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        loginLocked = false;
+        loginAttempts = 0;
+        lockTimer.stop();
+    }
+});
+                lockTimer.setRepeats(false);
+                lockTimer.start();
+            } else {
+                
+                JOptionPane.showMessageDialog(this,
+                    "Invalid email or password. Attempts: " + loginAttempts + "/3",
                     "Login Error",
                     JOptionPane.ERROR_MESSAGE);
             }
-
-            // Close resources
-            rs.close();
-            pstmt.close();
-
-        } catch (SQLException ex) {
-            // Handle database connection or query errors
-            JOptionPane.showMessageDialog(this,
-                "Database error: " + ex.getMessage(),
-                "Database Error",
-                JOptionPane.ERROR_MESSAGE);
-            ex.printStackTrace();
-        }// TODO add your handling code here:
+        }
+        
+        
+        rs.close();
+        pstmt.close();
+    } catch (SQLException ex) {
+       
+        JOptionPane.showMessageDialog(this,
+            "Database error: " + ex.getMessage(),
+            "Database Error",
+            JOptionPane.ERROR_MESSAGE);
+        ex.printStackTrace();
+    }
     }//GEN-LAST:event_LoginActionPerformed
 
-    private void jPasswordField2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jPasswordField2ActionPerformed
+    private void PasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_PasswordActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jPasswordField2ActionPerformed
+    }//GEN-LAST:event_PasswordActionPerformed
+
+    private void toggleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_toggleActionPerformed
+   if (toggle.isSelected()) {
+        Password.setEchoChar((char) 0); // Show password
+    } else {
+        Password.setEchoChar('•'); // Hide password (using bullet character)
+    }        // TODO add your handling code here:
+    }//GEN-LAST:event_toggleActionPerformed
 
     /**
      * @param args the command line arguments
@@ -298,7 +388,9 @@ public class Login extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel Left;
     private javax.swing.JButton Login;
+    private javax.swing.JPasswordField Password;
     private javax.swing.JPanel Right;
+    private javax.swing.JTextField email;
     private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
@@ -308,7 +400,7 @@ public class Login extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JPasswordField jPasswordField2;
-    private javax.swing.JTextField jTextField1;
+    private javax.swing.JButton remember;
+    private javax.swing.JCheckBox toggle;
     // End of variables declaration//GEN-END:variables
 }
