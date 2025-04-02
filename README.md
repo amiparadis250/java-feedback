@@ -32,4 +32,3 @@ This is a simple feedback system written in Java using NetBeans. It allows users
 ## Contributors
 
 * Ishimwe Ami Paradis
-/******  2c41aab6-f186-42b6-a535-269e29e8f4ab  *******/
